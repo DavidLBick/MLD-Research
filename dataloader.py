@@ -6,7 +6,7 @@ import pdb
 
 ############# CONSTANTS #############
 FILE_PATH = "G_trans-D_nsb-5_cb-0_empty-8-5-2-2_lp-150_notch-60-120_beats-head-meas_blinks-head-meas_data_array.npz"
-miliseconds = 500
+MILLISECONDS = 750
 BATCH_SIZE = 32
 BATCH_PRINT_INTERVAL = 1
 MODEL_PATH = "./saved_models/"
@@ -22,7 +22,7 @@ class MEG_Dataset(Data.Dataset):
 
     def __getitem__(self, index):
         i,j = self.index_map[index]
-        word_meg = self.data[i, j, :, :miliseconds]
+        word_meg = self.data[i, j, :, :MILLISECONDS]
         target_idx = i
         target_word = inv_stimulus_order_dict[i]
 
