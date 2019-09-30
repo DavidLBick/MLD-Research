@@ -73,3 +73,16 @@ class Simple_Conv1d(nn.Module):
             convolved = self.embedding_model(x)
             return self.classification_model(convolved)
 
+class Logistic_Regression(nn.Module):
+    def __init__(self, num_classes):
+        super(Logistic_Regression, self).__init__()
+        MEG_CHANNELS = 306
+        self.logreg = nn.Linear(MEG_CHANNELS*MILLISECONDS, 60)
+        
+
+    def forward(self, x):
+        return self.logreg(x)
+        
+
+
+
