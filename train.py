@@ -137,7 +137,7 @@ class Trainer(object):
 def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
-    model = Simple_Conv1d(NUM_WORDS)
+    model = Logistic_Regression(NUM_WORDS)
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
 

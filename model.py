@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pdb
 from math import floor
+from dataloader import *
 
 ##################
 ### SIMPLE CNN ###
@@ -81,7 +82,9 @@ class Logistic_Regression(nn.Module):
         
 
     def forward(self, x):
-        return self.logreg(x)
+        # check how to flatten the input so that I can apply 
+        # the linear layer
+        return self.logreg(x.view(BATCH_SIZE, -1))
         
 
 
