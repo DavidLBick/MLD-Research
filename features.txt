@@ -1,2 +1,4 @@
 1. weight initialization of 1 / sqrt(n)
 2. normalization by channel -- subtract by mean across channel and divide by channel standard deviation
+3. tensorboard
+4. trained on unshuffled data, checked afterwards on the shuffled data, still performed similarly
