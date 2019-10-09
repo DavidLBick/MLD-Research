@@ -1,0 +1,5 @@
+1. speed up loading
+2. split the current person data into train and test set
+3. try this model on another person 
+4. look for reasons why this accuracy wouldn't be real 
+5. ranking function 

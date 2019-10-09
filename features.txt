@@ -1,0 +1,2 @@
+1. weight initialization of 1 / sqrt(n)
+2. normalization by channel -- subtract by mean across channel and divide by channel standard deviation
