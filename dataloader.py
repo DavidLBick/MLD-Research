@@ -3,6 +3,9 @@ import torch
 import torch.utils.data as Data
 import numpy as np
 import pdb
+from torch.utils.tensorboard import SummaryWriter
+import time
+
 
 ############# CONSTANTS #############
 FILE_PATH = "G_trans-D_nsb-5_cb-0_empty-8-5-2-2_lp-150_notch-60-120_beats-head-meas_blinks-head-meas_data_array.npz"
@@ -12,6 +15,9 @@ BATCH_PRINT_INTERVAL = 1
 MODEL_PATH = "./saved_models/"
 N_EPOCHS = 20
 PLOT_GRAD_FLOW = True
+NORMALIZE = True
+
+writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
 #####################################
 
 class MEG_Dataset(Data.Dataset):

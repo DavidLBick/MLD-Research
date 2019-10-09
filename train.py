@@ -6,6 +6,8 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
+np.random.seed(10)
+
 def plot_grad_flow_alt(named_parameters):
     '''Plots the gradients flowing through different layers in the net during training.
     Can be used for checking for possible gradient vanishing / exploding problems.
@@ -55,16 +57,16 @@ def plot_grad_flow(named_parameters):
     return 
 
 def print_stats(batch_idx, after, before, 
-                batch_loss, running_loss, accuracy,
-                batch_accuracy):
+                batch_loss, running_loss, batch_accuracy,
+                correct, total):
     print("Stats: batch %d" % batch_idx)
     print("Time: ", after - before)
     print("Batch loss", batch_loss)
     print("Running loss", running_loss)
     print("Batch accuracy", batch_accuracy)
-    print("Accuracy", accuracy)
+    print("Total Correct", correct)
+    print("Total Running Examples", total)
     print('\n')
-
     return
 
 class Trainer(object):
@@ -98,12 +100,18 @@ class Trainer(object):
 
                 self.optimizer.zero_grad()
 
-                out = self.model(data)
+                if NORMALIZE: 
+                    # normalizing each channel by subtracting channel mean 
+                    # and dividing by channel st dev 
+                    means = torch.mean(data, dim = 2).view(32, 306, 1)
+                    sds = torch.mean(data, dim = 2).view(32, 306, 1)
+                    data = (data - means) / sds
+
+                out = self.model(data, batch_idx)
 
                 out = out.view(self.batch_size, -1)
                 loss = self.criterion(out, label)
                 loss.backward()
-
                 
                 plot_grad_flow(self.model.named_parameters())
                 plot_grad_flow_alt(self.model.named_parameters())
@@ -126,10 +134,24 @@ class Trainer(object):
                     print_stats(batch_idx, after, before, 
                                 loss.item(), epoch_loss / (batch_idx+1),  
                                 float(batch_correct / self.batch_size), 
-                                float(correct / total))
+                                correct, 
+                                total)
+
+                    for m in self.model.modules():
+                        if isinstance(m, nn.Linear):
+                            writer.add_histogram("Weights", 
+                                                 m.weight.data, 
+                                                 batch_idx)
+
+                    writer.add_scalar("Loss/Train", 
+                                      loss.item(), 
+                                      batch_idx)
+                    writer.add_scalar("Accuracy/Train", 
+                                      float(correct) / total, 
+                                      batch_idx)
                     before = after
 
-            torch.save(self.model, MODEL_PATH + "epoch%d.pt" % epoch)
+            #torch.save(self.model, MODEL_PATH + "epoch%d.pt" % epoch)
 
         return
 
@@ -137,7 +159,8 @@ class Trainer(object):
 def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
-    model = Logistic_Regression(NUM_WORDS)
+    #model = Logistic_Regression(NUM_WORDS)
+    model = torch.load("saved_models/epoch9.pt")
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
 
