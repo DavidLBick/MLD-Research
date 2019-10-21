@@ -82,8 +82,59 @@ class Trainer(object):
             print("Model to cuda")
             self.model = self.model.cuda()
 
+    def test(self):
+        print('TESTING...')
+        correct, epoch_loss, total = 0., 0., 0.
+
+        before = time.time()
+        print(len(test_loader), "batches of size", self.batch_size)
+        for batch_idx, (data, label, label_word) in enumerate(test_loader):
+            # data --> MEG scan 
+            # label --> index of word
+            # label_word --> actual word (just in case is useful)
+            if self.gpu:
+                data = data.float().cuda()
+                label = label.cuda()
+
+            else: data = data.float(); 
+
+            self.optimizer.zero_grad()
+
+            if NORMALIZE: 
+                # normalizing each channel by subtracting channel mean 
+                # and dividing by channel st dev 
+                means = torch.mean(data, dim = 2).view(32, 306, 1)
+                sds = torch.mean(data, dim = 2).view(32, 306, 1)
+                data = (data - means) / sds
+
+            out = self.model(data, batch_idx)
+
+            out = out.view(self.batch_size, -1)
+
+            # NOTE: potential speed-up by not moving to numpy
+            forward_res = out.detach().cpu().numpy()
+            label = label.detach().cpu().numpy()
+            predictions = np.argmax(forward_res, axis=1)
+
+            batch_correct = np.sum((predictions == label))
+            correct += batch_correct
+            total += data.size(0)
+
+            if batch_idx % BATCH_PRINT_INTERVAL == 0:
+                after = time.time()
+                print('Test stats')
+                print_stats(batch_idx, after, before, 
+                            0, 0,  
+                            float(batch_correct / self.batch_size), 
+                            correct, 
+                            total)
+                before = after
+        print('Done testing.')
+
+
     def train(self, n_epochs, train_loader):
         for epoch in range(n_epochs):
+            print('Epoch #%d' % epoch)
             correct, epoch_loss, total = 0., 0., 0.
 
             before = time.time()
@@ -152,6 +203,7 @@ class Trainer(object):
                     before = after
 
             #torch.save(self.model, MODEL_PATH + "epoch%d.pt" % epoch)
+            self.test()
 
         return
 
