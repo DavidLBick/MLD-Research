@@ -69,6 +69,15 @@ def print_stats(batch_idx, after, before,
     print('\n')
     return
 
+def enumerate2dList(L):
+    enumd = []
+    for arr_idx in range(len(L)):
+        enumd.append([])
+        for i,x in enumerate(L[arr_idx]):
+            enumd[arr_idx].append((i,x))
+        enumd[arr_idx].sort(key=lambda x: x[1])
+    return np.array(enumd, dtype=[('f1', np.uint64), ('f2', float)])
+
 class Trainer(object):
     def __init__(self, model, optimizer):
         super(Trainer, self).__init__()
@@ -113,10 +122,20 @@ class Trainer(object):
 
             # NOTE: potential speed-up by not moving to numpy
             forward_res = out.detach().cpu().numpy()
-            label = label.detach().cpu().numpy()
-            predictions = np.argmax(forward_res, axis=1)
+            labels = label.detach().cpu().numpy()
+            forward_res = enumerate2dList(forward_res)
 
-            batch_correct = np.sum((predictions == label))
+            batch_correct = 0
+            for i,label in enumerate(labels):
+                for j,x in enumerate(forward_res[i]):
+                    word,_ = x
+                    if word == label:
+                        batch_correct += j/60
+                        break;
+            print('batch_correct: ' + str(batch_correct))
+            # predictions = np.argmax(forward_res, axis=1)
+
+            # batch_correct = np.sum((predictions == labels))
             correct += batch_correct
             total += data.size(0)
 
@@ -173,10 +192,19 @@ class Trainer(object):
 
                 # NOTE: potential speed-up by not moving to numpy
                 forward_res = out.detach().cpu().numpy()
-                label = label.detach().cpu().numpy()
-                predictions = np.argmax(forward_res, axis=1)
+                labels = label.detach().cpu().numpy()
+                forward_res = enumerate2dList(forward_res)
 
-                batch_correct = np.sum((predictions == label))
+                batch_correct = 0
+                for i,label in enumerate(labels):
+                    for j,x in enumerate(forward_res[i]):
+                        word,_ = x
+                        if word == label:
+                            batch_correct += j/60
+                            break;
+                # predictions = np.argmax(forward_res, axis=1)
+
+                # batch_correct = np.sum((predictions == labels))
                 correct += batch_correct
                 total += data.size(0)
 
