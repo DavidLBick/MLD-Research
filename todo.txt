@@ -3,3 +3,4 @@
 3. try this model on another person 
 4. look for reasons why this accuracy wouldn't be real 
 5. ranking function 
+6. Should we run clustering/K-means with k=60 on our data to examine how 'pure' the classes are?
