@@ -17,7 +17,8 @@ N_EPOCHS = 20
 PLOT_GRAD_FLOW = True
 NORMALIZE = True
 
-writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
+#writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
+writer = SummaryWriter(log_dir = './tb_logs/' + "embeddings")
 #####################################
 
 class MEG_Dataset(Data.Dataset):
@@ -39,8 +40,8 @@ class MEG_Dataset(Data.Dataset):
 
 print("Loading MEG data...")
 meg_dict = pickle_load(FILE_PATH)
-
 data = meg_dict['data_array']
+pdb.set_trace()
 stimulus_order_dict = meg_dict['stimulus_order_dict']
 inv_stimulus_order_dict = meg_dict['inv_stimulus_order_dict']
 question_order_dict = meg_dict['question_order_dict']

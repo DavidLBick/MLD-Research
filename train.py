@@ -92,6 +92,7 @@ class Trainer(object):
                 # data --> MEG scan 
                 # label --> index of word
                 # label_word --> actual word (just in case is useful)
+                orig_data = data
                 if self.gpu:
                     data = data.float().cuda()
                     label = label.cuda()
@@ -100,12 +101,22 @@ class Trainer(object):
 
                 self.optimizer.zero_grad()
 
+                writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
+                                     global_step = batch_idx, 
+                                     metadata = [word for word in label_word], 
+                                     tag = 'Unormalized MEG Vecs')
+
                 if NORMALIZE: 
                     # normalizing each channel by subtracting channel mean 
                     # and dividing by channel st dev 
                     means = torch.mean(data, dim = 2).view(32, 306, 1)
                     sds = torch.mean(data, dim = 2).view(32, 306, 1)
                     data = (data - means) / sds
+
+                writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
+                                     global_step = batch_idx, 
+                                     metadata = [word for word in label_word], 
+                                     tag = 'Normalized MEG Vecs')
 
                 out = self.model(data, batch_idx)
 
