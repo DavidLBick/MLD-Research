@@ -30,7 +30,7 @@ def calc_L_out(L_in, padding, kernel_size, stride, dilation=1):
 # figure out the feature dimension of the last layer to automate
 # entry of the in hidden size for the final linear classification layer 
 def get_last_L_out(params):
-    init_L_in = 500
+    init_L_in = MILLISECONDS
     L_out = None
     for i in range(len(params)):
         L_in = L_out if L_out != None else init_L_in
@@ -61,19 +61,21 @@ class Simple_Conv1d(nn.Module):
         # calculate last length and multiply by the last out channels
         # because we are flattening it
         in_size = get_last_L_out(params) * params[-1][1]
+        log_reg = nn.Linear(in_size, num_classes)
+        log_reg.apply(weights_init_uniform)
+        # self.classification_model = nn.Sequential(
+        #     nn.ReLU(True),
+        #     nn.Linear(in_size, num_classes)
+        #     )
         self.classification_model = nn.Sequential(
             nn.ReLU(True),
-            nn.Linear(in_size, num_classes)
-            )    
+            log_reg
+            )
 
     def forward(self, x, embedding=False):
-        if embedding:
-            convolved = self.embedding_model(x)
-            return convolved
-
-        else:
-            convolved = self.embedding_model(x)
-            return self.classification_model(convolved)
+        convolved = self.embedding_model(x)
+        y = self.classification_model(convolved)
+        return y
 
 def weights_init_uniform(m):
     classname = m.__class__.__name__
