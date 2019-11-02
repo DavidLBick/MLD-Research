@@ -61,21 +61,17 @@ class Space_Conv(nn.Module):
         # calculate last length and multiply by the last out channels
         # because we are flattening it
         in_size = get_last_L_out(params) * params[-1][1]
-
         self.classification_model = nn.Sequential(
             nn.ReLU(True),
             nn.Linear(in_size, num_classes)
-            )    
+        )
+
 
     def forward(self, x, embedding=False):
-        if embedding:
-            convolved = self.embedding_model(x)
-            return convolved
+        convolved = self.embedding_model(x)
+        y = self.classification_model(convolved)
+        return y
 
-        else:
-
-            convolved = self.embedding_model(x)
-            return self.classification_model(convolved)
 
 class Time_Conv(nn.Module):
     def __init__(self, num_classes):

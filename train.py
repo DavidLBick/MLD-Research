@@ -198,8 +198,10 @@ class Trainer(object):
                 loss = self.criterion(out, label)
                 loss.backward()
                 
+
                 #plot_grad_flow(self.model.named_parameters())
                 #plot_grad_flow_alt(self.model.named_parameters())
+
 
                 self.optimizer.step()
 
@@ -256,6 +258,7 @@ def main():
     NUM_WORDS = 60
     #model = Logistic_Regression(NUM_WORDS)
     model = Time_Conv(NUM_WORDS)
+
     #model = torch.load("saved_models/epoch9.pt")
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
