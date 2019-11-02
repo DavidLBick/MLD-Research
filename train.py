@@ -112,10 +112,11 @@ class Trainer(object):
             if NORMALIZE: 
                 # normalizing each channel by subtracting channel mean 
                 # and dividing by channel st dev 
-                means = torch.mean(data, dim = 2).view(32, 306, 1)
-                sds = torch.mean(data, dim = 2).view(32, 306, 1)
+                means = torch.mean(data, dim = 1).view(32, 1, 750)
+                sds = torch.std(data, dim = 1).view(32, 1, 750)
                 data = (data - means) / sds
 
+            data = data.permute(0, 2, 1)
             out = self.model(data, batch_idx)
 
             out = out.view(self.batch_size, -1)
@@ -171,31 +172,34 @@ class Trainer(object):
 
                 self.optimizer.zero_grad()
 
-                writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
-                                     global_step = batch_idx, 
-                                     metadata = [word for word in label_word], 
-                                     tag = 'Unormalized MEG Vecs')
+                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
+                #                     global_step = batch_idx, 
+                #                     metadata = [word for word in label_word], 
+                #                     tag = 'Unormalized MEG Vecs')
 
                 if NORMALIZE: 
                     # normalizing each channel by subtracting channel mean 
                     # and dividing by channel st dev 
-                    means = torch.mean(data, dim = 2).view(32, 306, 1)
-                    sds = torch.mean(data, dim = 2).view(32, 306, 1)
+                    means = torch.mean(data, dim = 1).view(32, 1, 750)
+                    sds = torch.std(data, dim = 1).view(32, 1, 750)
                     data = (data - means) / sds
 
-                writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
-                                     global_step = batch_idx, 
-                                     metadata = [word for word in label_word], 
-                                     tag = 'Normalized MEG Vecs')
+                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
+                #                     global_step = batch_idx, 
+                #                     metadata = [word for word in label_word], 
+                #                     tag = 'Normalized MEG Vecs')
 
+                # FOR TIME CONVOLUTION 
+                # want to have the time steps as the channels
+                data = data.permute(0, 2, 1)
                 out = self.model(data, batch_idx)
 
                 out = out.view(self.batch_size, -1)
                 loss = self.criterion(out, label)
                 loss.backward()
                 
-                plot_grad_flow(self.model.named_parameters())
-                plot_grad_flow_alt(self.model.named_parameters())
+                #plot_grad_flow(self.model.named_parameters())
+                #plot_grad_flow_alt(self.model.named_parameters())
 
                 self.optimizer.step()
 
@@ -251,7 +255,8 @@ def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
     #model = Logistic_Regression(NUM_WORDS)
-    model = torch.load("saved_models/epoch9.pt")
+    model = Time_Conv(NUM_WORDS)
+    #model = torch.load("saved_models/epoch9.pt")
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
 

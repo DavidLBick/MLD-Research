@@ -18,7 +18,7 @@ PLOT_GRAD_FLOW = True
 NORMALIZE = True
 
 #writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
-writer = SummaryWriter(log_dir = './tb_logs/' + "embeddings")
+writer = SummaryWriter(log_dir = './tb_logs/' + 'cnn_run1')
 #####################################
 
 class MEG_Dataset(Data.Dataset):
@@ -42,7 +42,6 @@ class MEG_Dataset(Data.Dataset):
 print("Loading MEG data...")
 meg_dict = pickle_load(FILE_PATH)
 data = meg_dict['data_array']
-pdb.set_trace()
 stimulus_order_dict = meg_dict['stimulus_order_dict']
 inv_stimulus_order_dict = meg_dict['inv_stimulus_order_dict']
 question_order_dict = meg_dict['question_order_dict']
@@ -69,13 +68,15 @@ train_loader = Data.DataLoader(train_dataset,
                                batch_size = BATCH_SIZE, 
                                shuffle = True, 
                                drop_last = True)
+
+# add the dimension of 1 in index 1 because the dataset relies on 
+# having shape (words, questions, channels, time) so we need a dummy 
+# axis for the questions index
 test_data = np.mean(split_data[1], axis=1).reshape(split_data[1].shape[0],
                                                    1,
                                                    split_data[1].shape[2],
                                                    split_data[1].shape[3])
-print('TEST TYPE: ' + str(type(test_data)))
-print('TEST DIMS: ')
-print(test_data.shape)
+
 test_dataset = MEG_Dataset(test_data, test_map)
 test_loader = Data.DataLoader(test_dataset, 
                            batch_size = BATCH_SIZE, 

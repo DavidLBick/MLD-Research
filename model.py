@@ -30,7 +30,7 @@ def calc_L_out(L_in, padding, kernel_size, stride, dilation=1):
 # figure out the feature dimension of the last layer to automate
 # entry of the in hidden size for the final linear classification layer 
 def get_last_L_out(params):
-    init_L_in = 500
+    init_L_in = MILLISECONDS
     L_out = None
     for i in range(len(params)):
         L_in = L_out if L_out != None else init_L_in
@@ -38,9 +38,9 @@ def get_last_L_out(params):
                                params[i][3])
     return L_out
 
-class Simple_Conv1d(nn.Module):
+class Space_Conv(nn.Module):
     def __init__(self, num_classes):
-        super(Simple_Conv1d, self).__init__()
+        super(Space_Conv, self).__init__()
         params = [[306, 16, 3, 2, 1],
                   [16,   4, 1, 2, 1] ]
 
@@ -61,6 +61,7 @@ class Simple_Conv1d(nn.Module):
         # calculate last length and multiply by the last out channels
         # because we are flattening it
         in_size = get_last_L_out(params) * params[-1][1]
+
         self.classification_model = nn.Sequential(
             nn.ReLU(True),
             nn.Linear(in_size, num_classes)
@@ -72,8 +73,50 @@ class Simple_Conv1d(nn.Module):
             return convolved
 
         else:
+
             convolved = self.embedding_model(x)
             return self.classification_model(convolved)
+
+class Time_Conv(nn.Module):
+    def __init__(self, num_classes):
+        super(Time_Conv, self).__init__()
+        def get_last_L_out_time(params):
+            init_L_in = 306
+            L_out = None
+            for i in range(len(params)):
+                L_in = L_out if L_out != None else init_L_in
+                L_out = calc_L_out(L_in, params[i][4], params[i][2], 
+                                       params[i][3])
+            return L_out
+
+        params = [[MILLISECONDS, 750, 3, 2, 1]]
+
+        self.embedding_model = nn.Sequential(
+            nn.Conv1d(in_channels = params[0][0], 
+                out_channels = params[0][1], 
+                kernel_size = params[0][2],
+                stride=params[0][3], padding=params[0][4], bias=True),   
+            Flatten()     
+            )
+
+        # calculate last length and multiply by the last out channels
+        # because we are flattening it
+        in_size = get_last_L_out_time(params) * params[-1][1]
+
+        self.classification_model = nn.Sequential(
+            nn.ReLU(), 
+            nn.Linear(in_size, num_classes)
+            )    
+
+    def forward(self, x, embedding=False):
+        if embedding:
+            convolved = self.embedding_model(x)
+            return convolved
+
+        else:
+            convolved = self.embedding_model(x)
+            return self.classification_model(convolved)
+
 
 def weights_init_uniform(m):
     classname = m.__class__.__name__
