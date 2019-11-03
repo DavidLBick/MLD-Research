@@ -124,25 +124,25 @@ class Logistic_Regression(nn.Module):
     def __init__(self, num_classes):
         super(Logistic_Regression, self).__init__()
         MEG_CHANNELS = 306
-        self.logreg = nn.Linear(MEG_CHANNELS*MILLISECONDS, 60)
+        self.logreg = nn.Linear(1, 60)
         self.logreg.apply(weights_init_uniform)        
 
-    def forward(self, x, i):
+    def forward(self, x, i=0):
         batch_logits = self.logreg(x.view(BATCH_SIZE, -1))
         first_row_logits = self.logreg(x.view(BATCH_SIZE, -1)[0, :])
         
-        logits_fig = plt.figure()
-        plt.imshow(batch_logits.detach().numpy())
-        writer.add_figure(tag = 'Logits', 
-                          figure = logits_fig, 
-                          global_step = i)
+        # logits_fig = plt.figure()
+        # plt.imshow(batch_logits.detach().numpy())
+        # writer.add_figure(tag = 'Logits', 
+        #                   figure = logits_fig, 
+        #                   global_step = i)
 
-        for j in range(BATCH_SIZE):
-            plot_i = plt.figure()
-            plt.imshow(x[j].numpy())
-            writer.add_figure("MEG_Scan", 
-                             plot_i, 
-                             i)
+        # for j in range(BATCH_SIZE):
+        #     plot_i = plt.figure()
+        #     plt.imshow(x[j].numpy())
+        #     writer.add_figure("MEG_Scan", 
+        #                      plot_i, 
+        #                      i)
         return batch_logits
         
 

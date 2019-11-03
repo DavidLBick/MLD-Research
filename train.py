@@ -91,12 +91,12 @@ class Trainer(object):
             print("Model to cuda")
             self.model = self.model.cuda()
 
-    def test(self):
-        print('TESTING...')
+    def test(self, test_loader):
+        # print('TESTING...')
         correct, epoch_loss, total = 0., 0., 0.
 
         before = time.time()
-        print(len(test_loader), "batches of size", self.batch_size)
+        # print(len(test_loader), "batches of size", self.batch_size)
         for batch_idx, (data, label, label_word) in enumerate(test_loader):
             # data --> MEG scan 
             # label --> index of word
@@ -112,11 +112,11 @@ class Trainer(object):
             if NORMALIZE: 
                 # normalizing each channel by subtracting channel mean 
                 # and dividing by channel st dev 
-                means = torch.mean(data, dim = 1).view(32, 1, 750)
-                sds = torch.std(data, dim = 1).view(32, 1, 750)
+                means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
+                sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                 data = (data - means) / sds
 
-            data = data.permute(0, 2, 1)
+            # data = data.permute(0, 2, 1)
             out = self.model(data)
 
             out = out.view(self.batch_size, -1)
@@ -135,35 +135,36 @@ class Trainer(object):
                     if word == label:
                         batch_correct += j/60
                         break;
-            print('batch_correct: ' + str(batch_correct))
+            # print('batch_correct: ' + str(batch_correct))
             # predictions = np.argmax(forward_res, axis=1)
 
             # batch_correct = np.sum((predictions == labels))
             correct += batch_correct
             total += data.size(0)
 
-            if batch_idx % BATCH_PRINT_INTERVAL == 0:
-                after = time.time()
-                print('Test stats')
-                print_stats(batch_idx, after, before, 
-                            0, 0,  
-                            float(batch_correct / self.batch_size), 
-                            correct, 
-                            total)
-                before = after
+        #     if batch_idx % BATCH_PRINT_INTERVAL == 0:
+        #         after = time.time()
+        #         print('Test stats')
+        #         print_stats(batch_idx, after, before, 
+        #                     0, 0,  
+        #                     float(batch_correct / self.batch_size), 
+        #                     correct, 
+        #                     total)
+        #         before = after
                 
-        print('Done testing.')
+        # print('Done testing.')
         return float(correct) / total, epoch_loss / batch_idx
 
 
-    def train(self, n_epochs, train_loader):
+    def train(self, n_epochs, train_loader, test_loader):
         best_val_acc = None
+        best_epoch = None
         for epoch in range(n_epochs):
-            print('Epoch #%d' % epoch)
+            # print('Epoch #%d' % epoch)
             correct, epoch_loss, total = 0., 0., 0.
 
             before = time.time()
-            print(len(train_loader), "batches of size", self.batch_size)
+            # print(len(train_loader), "batches of size", self.batch_size)
             for batch_idx, (data, label, label_word) in enumerate(train_loader):
                 # data --> MEG scan 
                 # label --> index of word
@@ -183,10 +184,12 @@ class Trainer(object):
                 #                     tag = 'Unormalized MEG Vecs')
 
                 if NORMALIZE: 
+                    print('Data: ', end='')
+                    print(data)
                     # normalizing each channel by subtracting channel mean 
                     # and dividing by channel st dev 
-                    means = torch.mean(data, dim = 1).view(32, 1, 750)
-                    sds = torch.std(data, dim = 1).view(32, 1, 750)
+                    means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
+                    sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                     data = (data - means) / sds
 
                 #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
@@ -196,7 +199,7 @@ class Trainer(object):
 
                 # FOR TIME CONVOLUTION 
                 # want to have the time steps as the channels
-                data = data.permute(0, 2, 1)
+                # data = data.permute(0, 2, 1)
                 out = self.model(data)
 
                 out = out.view(self.batch_size, -1)
@@ -228,50 +231,51 @@ class Trainer(object):
                 correct += batch_correct
                 total += data.size(0)
 
-                if batch_idx % BATCH_PRINT_INTERVAL == 0:
-                    after = time.time()
-                    print_stats(batch_idx, after, before, 
-                                loss.item(), epoch_loss / (batch_idx+1),  
-                                float(batch_correct / self.batch_size), 
-                                correct, 
-                                total)
+                # if batch_idx % BATCH_PRINT_INTERVAL == 0:
+                #     after = time.time()
+                #     print_stats(batch_idx, after, before, 
+                #                 loss.item(), epoch_loss / (batch_idx+1),  
+                #                 float(batch_correct / self.batch_size), 
+                #                 correct, 
+                #                 total)
 
-                    for m in self.model.modules():
-                        if isinstance(m, nn.Linear):
-                            writer.add_histogram("Weights", 
-                                                 m.weight.data, 
-                                                 batch_idx)
-                    before = after
+                #     for m in self.model.modules():
+                #         if isinstance(m, nn.Linear):
+                #             writer.add_histogram("Weights", 
+                #                                  m.weight.data, 
+                #                                  batch_idx)
+                #     before = after
 
 
-            val_acc, val_loss = self.test()
+            val_acc, val_loss = self.test(test_loader)
             if best_val_acc is None or val_acc < best_val_acc:
                 torch.save(self.model, MODEL_PATH + 
                                        "time_conv_epoch%d.pt" % epoch)
                 best_val_acc = val_acc
+                best_epoch = epoch
 
-            writer.add_scalar("Loss/Train", 
-                              epoch_loss / batch_idx, 
-                              epoch)
-            writer.add_scalar("Accuracy/Train", 
-                              float(correct) / total, 
-                              epoch)
+            # writer.add_scalar("Loss/Train", 
+            #                   epoch_loss / batch_idx, 
+            #                   epoch)
+            # writer.add_scalar("Accuracy/Train", 
+            #                   float(correct) / total, 
+            #                   epoch)
 
-            writer.add_scalar("Loss/Test", 
-                              val_loss, 
-                              epoch)
-            writer.add_scalar("Accuracy/Test", 
-                              val_acc, 
-                              epoch)
+            # writer.add_scalar("Loss/Test", 
+            #                   val_loss, 
+            #                   epoch)
+            # writer.add_scalar("Accuracy/Test", 
+            #                   val_acc, 
+            #                   epoch)
 
-        return
+        return (best_val_acc, best_epoch)
 
 
 def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
-    #model = Logistic_Regression(NUM_WORDS)
-    model = Time_Conv(NUM_WORDS)
+    model = Logistic_Regression(NUM_WORDS)
+    #model = Time_Conv(NUM_WORDS)
 
     #model = torch.load("saved_models/epoch9.pt")
     optim = torch.optim.Adam(model.parameters(), 
@@ -280,10 +284,23 @@ def main():
     trainer = Trainer(model, optim)
     print("done")
 
-    TRAIN_FLAG = True
-    if TRAIN_FLAG:
-        print("Begin training...")
-        trainer.train(N_EPOCHS, train_loader)
+    feature_list = []
+
+    for i in range(len(train_loaders)):
+        ms, channel, train_loader = train_loaders[i]
+        _, _, test_loader = test_loaders[i]
+
+        TRAIN_FLAG = True
+        if TRAIN_FLAG:
+            print("Begin training...")
+            (best_acc, best_epoch) = trainer.train(N_EPOCHS, train_loader, test_loader)
+            feature_list.append((channel, ms, best_acc, best_epoch))
+            feature_list.sort(key=lambda x: x[2], reverse=True)
+            if len(feature_list) < 10:
+                print(feature_list)
+
+        with open('feature_list.txt', 'w') as f:
+            f.write('\n'.join(str(x) for x in feature_list))
 
     return 
 

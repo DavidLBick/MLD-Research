@@ -11,26 +11,28 @@ import time
 FILE_PATH = "D_trans-D_nsb-5_cb-0_empty-8-5-2-2_lp-150_notch-60-120_beats-head-meas_blinks-head-meas_data_array.npz"
 MILLISECONDS = 750
 BATCH_SIZE = 32
-BATCH_PRINT_INTERVAL = 1
+BATCH_PRINT_INTERVAL = 32
 MODEL_PATH = "./saved_models/"
-N_EPOCHS = 20
+N_EPOCHS = 15
 PLOT_GRAD_FLOW = True
-NORMALIZE = True
+NORMALIZE = False
 
 #writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
 writer = SummaryWriter(log_dir = './tb_logs/' + 'time_conv/' + str(time.time()))
 #####################################
 
 class MEG_Dataset(Data.Dataset):
-    def __init__(self, data, index_map):
+    def __init__(self, data, index_map, ms, channel):
         super(MEG_Dataset, self).__init__()
         self.data = data
         self.index_map = index_map
+        self.ms = ms
+        self.channel = channel
         #self.index_map = np.load('index_map.npy')
 
     def __getitem__(self, index):
         i,j = self.index_map[index]
-        word_meg = self.data[i, j, :, :MILLISECONDS]
+        word_meg = self.data[i, j, self.channel, self.ms]
         target_idx = i
         target_word = inv_stimulus_order_dict[i]
 
@@ -63,12 +65,6 @@ training_size = int(0.8*data.shape[1])
 split_data = np.split(data, [training_size], 1)
 
 train_data = split_data[0]
-train_dataset = MEG_Dataset(train_data, train_map)
-train_loader = Data.DataLoader(train_dataset, 
-                               batch_size = BATCH_SIZE, 
-                               shuffle = True, 
-                               drop_last = True)
-
 # add the dimension of 1 in index 1 because the dataset relies on 
 # having shape (words, questions, channels, time) so we need a dummy 
 # axis for the questions index
@@ -77,10 +73,22 @@ test_data = np.mean(split_data[1], axis=1).reshape(split_data[1].shape[0],
                                                    split_data[1].shape[2],
                                                    split_data[1].shape[3])
 
-test_dataset = MEG_Dataset(test_data, test_map)
-test_loader = Data.DataLoader(test_dataset, 
-                           batch_size = BATCH_SIZE, 
-                           shuffle = True, 
-                           drop_last = True)
+train_loaders = []
+test_loaders = []
+for ms in range(750):
+    for channel in range(306):
+        train_dataset = MEG_Dataset(train_data, train_map, ms, channel)
+        train_loader = Data.DataLoader(train_dataset, 
+                                       batch_size = BATCH_SIZE, 
+                                       shuffle = True, 
+                                       drop_last = True)
+        train_loaders.append((ms,channel,train_loader))
+
+        test_dataset = MEG_Dataset(test_data, test_map, ms, channel)
+        test_loader = Data.DataLoader(test_dataset, 
+                                   batch_size = BATCH_SIZE, 
+                                   shuffle = True, 
+                                   drop_last = True)
+        test_loaders.append((ms,channel,test_loader))
 print("done")
         
