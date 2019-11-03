@@ -76,10 +76,12 @@ test_data = np.mean(split_data[1], axis=1).reshape(split_data[1].shape[0],
 
 train_loaders = []
 test_loaders = []
-for ms in range(MILLISECONDS//8):
+for ls in range(MILLISECONDS//8):
     for channel in range(CHANNELS//8):
-        ms = ms*8
+        ms = ls*8
         channel = channel*8
+        if ms > 740 or channel > 298:
+            print((ls,channel))
         train_dataset = MEG_Dataset(train_data, train_map, ms, channel)
         train_loader = Data.DataLoader(train_dataset, 
                                        batch_size = BATCH_SIZE, 
