@@ -18,7 +18,7 @@ PLOT_GRAD_FLOW = True
 NORMALIZE = True
 
 #writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
-writer = SummaryWriter(log_dir = './tb_logs/' + 'cnn_run1')
+writer = SummaryWriter(log_dir = './tb_logs/' + 'time_conv/' + str(time.time()))
 #####################################
 
 class MEG_Dataset(Data.Dataset):
