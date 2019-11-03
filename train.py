@@ -184,8 +184,6 @@ class Trainer(object):
                 #                     tag = 'Unormalized MEG Vecs')
 
                 if NORMALIZE: 
-                    print('Data: ', end='')
-                    print(data)
                     # normalizing each channel by subtracting channel mean 
                     # and dividing by channel st dev 
                     means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
@@ -249,8 +247,8 @@ class Trainer(object):
 
             val_acc, val_loss = self.test(test_loader)
             if best_val_acc is None or val_acc < best_val_acc:
-                torch.save(self.model, MODEL_PATH + 
-                                       "time_conv_epoch%d.pt" % epoch)
+                # torch.save(self.model, MODEL_PATH + 
+                #                        "time_conv_epoch%d.pt" % epoch)
                 best_val_acc = val_acc
                 best_epoch = epoch
 

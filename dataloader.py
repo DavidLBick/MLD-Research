@@ -11,11 +11,12 @@ import time
 FILE_PATH = "D_trans-D_nsb-5_cb-0_empty-8-5-2-2_lp-150_notch-60-120_beats-head-meas_blinks-head-meas_data_array.npz"
 MILLISECONDS = 750
 BATCH_SIZE = 32
-BATCH_PRINT_INTERVAL = 32
+BATCH_PRINT_INTERVAL = 1
 MODEL_PATH = "./saved_models/"
-N_EPOCHS = 15
+N_EPOCHS = 5
 PLOT_GRAD_FLOW = True
 NORMALIZE = False
+CHANNELS = 306
 
 #writer = SummaryWriter(log_dir = './tb_logs/' + str(time.time()))
 writer = SummaryWriter(log_dir = './tb_logs/' + 'time_conv/' + str(time.time()))
@@ -75,8 +76,10 @@ test_data = np.mean(split_data[1], axis=1).reshape(split_data[1].shape[0],
 
 train_loaders = []
 test_loaders = []
-for ms in range(750):
-    for channel in range(306):
+for ms in range(MILLISECONDS//8):
+    for channel in range(CHANNELS//8):
+        ms = ms*8
+        channel = channel*8
         train_dataset = MEG_Dataset(train_data, train_map, ms, channel)
         train_loader = Data.DataLoader(train_dataset, 
                                        batch_size = BATCH_SIZE, 
