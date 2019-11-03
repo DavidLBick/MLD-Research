@@ -117,7 +117,7 @@ class Trainer(object):
                 data = (data - means) / sds
 
             data = data.permute(0, 2, 1)
-            out = self.model(data, batch_idx)
+            out = self.model(data)
 
             out = out.view(self.batch_size, -1)
 
@@ -192,7 +192,7 @@ class Trainer(object):
                 # FOR TIME CONVOLUTION 
                 # want to have the time steps as the channels
                 data = data.permute(0, 2, 1)
-                out = self.model(data, batch_idx)
+                out = self.model(data)
 
                 out = out.view(self.batch_size, -1)
                 loss = self.criterion(out, label)
