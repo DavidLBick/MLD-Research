@@ -120,6 +120,8 @@ class Trainer(object):
             out = self.model(data)
 
             out = out.view(self.batch_size, -1)
+            loss = self.criterion(out, label)
+            epoch_loss += loss
 
             # NOTE: potential speed-up by not moving to numpy
             forward_res = out.detach().cpu().numpy()
@@ -149,10 +151,13 @@ class Trainer(object):
                             correct, 
                             total)
                 before = after
+                
         print('Done testing.')
+        return float(correct) / total, epoch_loss / batch_idx
 
 
     def train(self, n_epochs, train_loader):
+        best_val_acc = None
         for epoch in range(n_epochs):
             print('Epoch #%d' % epoch)
             correct, epoch_loss, total = 0., 0., 0.
@@ -198,10 +203,8 @@ class Trainer(object):
                 loss = self.criterion(out, label)
                 loss.backward()
                 
-
                 #plot_grad_flow(self.model.named_parameters())
                 #plot_grad_flow_alt(self.model.named_parameters())
-
 
                 self.optimizer.step()
 
@@ -238,17 +241,28 @@ class Trainer(object):
                             writer.add_histogram("Weights", 
                                                  m.weight.data, 
                                                  batch_idx)
-
-                    writer.add_scalar("Loss/Train", 
-                                      loss.item(), 
-                                      batch_idx)
-                    writer.add_scalar("Accuracy/Train", 
-                                      float(correct) / total, 
-                                      batch_idx)
                     before = after
 
-            #torch.save(self.model, MODEL_PATH + "epoch%d.pt" % epoch)
-            self.test()
+
+            val_acc, val_loss = self.test()
+            if best_val_acc is None or val_acc < best_val_acc:
+                torch.save(self.model, MODEL_PATH + 
+                                       "time_conv_epoch%d.pt" % epoch)
+                best_val_acc = val_acc
+
+            writer.add_scalar("Loss/Train", 
+                              epoch_loss / batch_idx, 
+                              epoch)
+            writer.add_scalar("Accuracy/Train", 
+                              float(correct) / total, 
+                              epoch)
+
+            writer.add_scalar("Loss/Test", 
+                              val_loss, 
+                              epoch)
+            writer.add_scalar("Accuracy/Test", 
+                              val_acc, 
+                              epoch)
 
         return
 
