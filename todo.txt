@@ -4,3 +4,20 @@
 4. look for reasons why this accuracy wouldn't be real 
 5. ranking function 
 6. Should we run clustering/K-means with k=60 on our data to examine how 'pure' the classes are?
+
+For week of 11/7 - 11/14:
+1. Run the model without feature selection.
+	a) Try with Convolution in 2 dimensions
+	b) Try with Convolution only over time
+	c) Try with Convolution only over channels (space)
+2. Run the model with feature selection.
+	- Select subset of best channels and then convolve in 1d over time
+3. Switch from using ReLu activation to Sigmoid activation for our CNNs
+4. Visualize the learned weights. Should reveal features
+	- Should be 306x7? for 7 ms selection
+5. Use 16 filters. See what each filter learns and see if the feature it learns matches up to a group of words (60 words fall in 12 groups of 5).
+	- See at what time step each filter is most activated (expect 150ms or 400ms)
+	- Look @ weights for features
+6. When we apply the weights over the time convolution we will get 750 values. If we apply this over the channels we can visualize and compare with the original.
+7. Maybe see if feature selection over individual points correlates to the features learned by the CNN
+8. In the end, we will be comparing the results of CNN vs. results of regression that uses feature selection
