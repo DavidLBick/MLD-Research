@@ -116,7 +116,7 @@ class Trainer(object):
                 sds = torch.std(data, dim = 1).view(32, 1, 750)
                 data = (data - means) / sds
 
-            data = data.permute(0, 2, 1)
+            # data = data.permute(0, 2, 1)
             out = self.model(data)
 
             out = out.view(self.batch_size, -1)
@@ -194,9 +194,9 @@ class Trainer(object):
                 #                     metadata = [word for word in label_word], 
                 #                     tag = 'Normalized MEG Vecs')
 
-                # FOR TIME CONVOLUTION 
+                # FOR SPACE CONVOLUTION 
                 # want to have the time steps as the channels
-                data = data.permute(0, 2, 1)
+                # data = data.permute(0, 2, 1)
                 out = self.model(data)
 
                 out = out.view(self.batch_size, -1)
@@ -238,6 +238,9 @@ class Trainer(object):
 
                     for m in self.model.modules():
                         if isinstance(m, nn.Linear):
+                            print('Layer type: ' + str(type(m)))
+                            print('Shape: ' + str(m.weight.shape))
+                            print()
                             writer.add_histogram("Weights", 
                                                  m.weight.data, 
                                                  batch_idx)
@@ -271,7 +274,12 @@ def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
     #model = Logistic_Regression(NUM_WORDS)
-    model = Time_Conv(NUM_WORDS)
+    model = Time_Space_Conv(NUM_WORDS)
+
+    print(model)
+    print('-'*60)
+    for l in list(model.named_parameters()):
+        print(l[0], ':', l[1].detach().numpy().shape)
 
     #model = torch.load("saved_models/epoch9.pt")
     optim = torch.optim.Adam(model.parameters(), 

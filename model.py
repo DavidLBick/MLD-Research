@@ -38,9 +38,9 @@ def get_last_L_out(params):
                                params[i][3])
     return L_out
 
-class Space_Conv(nn.Module):
+class Time_Conv(nn.Module):
     def __init__(self, num_classes):
-        super(Space_Conv, self).__init__()
+        super(Time_Conv, self).__init__()
         params = [[306, 16, 3, 2, 1],
                   [16,   4, 1, 2, 1] ]
 
@@ -73,9 +73,9 @@ class Space_Conv(nn.Module):
         return y
 
 
-class Time_Conv(nn.Module):
+class Space_Conv(nn.Module):
     def __init__(self, num_classes):
-        super(Time_Conv, self).__init__()
+        super(Space_Conv, self).__init__()
         def get_last_L_out_time(params):
             init_L_in = 306
             L_out = None
@@ -112,6 +112,51 @@ class Time_Conv(nn.Module):
         else:
             convolved = self.embedding_model(x)
             return self.classification_model(convolved)
+
+
+class Time_Space_Conv(nn.Module):
+    def __init__(self, num_classes):
+        super(Time_Space_Conv, self).__init__()
+
+        def get_last_L_out_2d(params):
+            init_L_in = CHANNELS*MILLISECONDS
+            L_out = None
+            for i in range(len(params)):
+                L_in = L_out if L_out != None else init_L_in
+                L_out = calc_L_out(L_in, params[i][4], params[i][2],
+                                        params[i][3])
+            return L_out
+
+        params = [[1, 16, (30,3), 2, 1]]
+
+        self.embedding_model = nn.Sequential(
+            nn.Conv2d(in_channels = params[0][0],
+                out_channels = params[0][1],
+                kernel_size = params[0][2],
+                stride = params[0][3],
+                padding = params[0][4], bias=True),
+            Flatten()
+            )
+
+        # calculate last length and multiply by the last out channels
+        # because we are flattening it
+        in_size = 840000 #get_last_L_out_2d(params) * params[-1][1]
+
+        self.classification_model = nn.Sequential(
+            nn.ReLU(),
+            nn.Linear(in_size, num_classes)
+            )
+
+    def forward(self, x, embedding=False):
+        x = x.unsqueeze(1)
+        if embedding:
+            convolved = self.embedding_model(x)
+            return convolved
+
+        else:
+            convolved = self.embedding_model(x)
+            return self.classification_model(convolved)
+
 
 
 def weights_init_uniform(m):
