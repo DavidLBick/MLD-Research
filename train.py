@@ -112,8 +112,8 @@ class Trainer(object):
             if NORMALIZE: 
                 # normalizing each channel by subtracting channel mean 
                 # and dividing by channel st dev 
-                means = torch.mean(data, dim = 1).view(32, 1, 750)
-                sds = torch.std(data, dim = 1).view(32, 1, 750)
+                means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
+                sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                 data = (data - means) / sds
 
             # data = data.permute(0, 2, 1)
@@ -185,8 +185,8 @@ class Trainer(object):
                 if NORMALIZE: 
                     # normalizing each channel by subtracting channel mean 
                     # and dividing by channel st dev 
-                    means = torch.mean(data, dim = 1).view(32, 1, 750)
-                    sds = torch.std(data, dim = 1).view(32, 1, 750)
+                    means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
+                    sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                     data = (data - means) / sds
 
                 #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 

@@ -6,6 +6,7 @@ from math import floor
 from dataloader import *
 import matplotlib.pyplot as plt
 
+
 ##################
 ### SIMPLE CNN ###
 ##################
@@ -127,7 +128,7 @@ class Time_Space_Conv(nn.Module):
                                         params[i][3])
             return L_out
 
-        params = [[1, 16, (30,3), 2, 1]]
+        params = [[1, 16, (15,3), 2, 1]]
 
         self.embedding_model = nn.Sequential(
             nn.Conv2d(in_channels = params[0][0],
@@ -140,7 +141,7 @@ class Time_Space_Conv(nn.Module):
 
         # calculate last length and multiply by the last out channels
         # because we are flattening it
-        in_size = 840000 #get_last_L_out_2d(params) * params[-1][1]
+        in_size = 882000 #get_last_L_out_2d(params) * params[-1][1]
 
         self.classification_model = nn.Sequential(
             nn.ReLU(),
@@ -156,7 +157,6 @@ class Time_Space_Conv(nn.Module):
         else:
             convolved = self.embedding_model(x)
             return self.classification_model(convolved)
-
 
 
 def weights_init_uniform(m):
