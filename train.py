@@ -248,7 +248,7 @@ class Trainer(object):
 
 
             val_acc, val_loss = self.test()
-            if best_val_acc is None or val_acc < best_val_acc:
+            if best_val_acc is None or val_acc > best_val_acc:
                 torch.save(self.model, MODEL_PATH + 
                                        "time_conv_epoch%d.pt" % epoch)
                 best_val_acc = val_acc
@@ -281,7 +281,7 @@ def main():
     for l in list(model.named_parameters()):
         print(l[0], ':', l[1].detach().numpy().shape)
 
-    #model = torch.load("saved_models/epoch9.pt")
+    # model = torch.load("saved_models/time_space_conv_725_epoch7.pt")
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
 

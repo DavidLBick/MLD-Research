@@ -139,9 +139,8 @@ class Time_Space_Conv(nn.Module):
             Flatten()
             )
 
-        # calculate last length and multiply by the last out channels
-        # because we are flattening it
-        in_size = 882000 #get_last_L_out_2d(params) * params[-1][1]
+
+        in_size = 882000
 
         self.classification_model = nn.Sequential(
             nn.ReLU(),
@@ -149,6 +148,7 @@ class Time_Space_Conv(nn.Module):
             )
 
     def forward(self, x, embedding=False):
+        print('SHAPE: ' + str(x.shape))
         x = x.unsqueeze(1)
         if embedding:
             convolved = self.embedding_model(x)
