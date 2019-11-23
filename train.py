@@ -5,6 +5,7 @@ from model import *
 import time
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import sys
 
 np.random.seed(10)
 
@@ -274,14 +275,45 @@ def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
     #model = Logistic_Regression(NUM_WORDS)
-    model = Time_Space_Conv(NUM_WORDS)
+    # model = Time_Space_Conv(NUM_WORDS)
 
-    print(model)
-    print('-'*60)
-    for l in list(model.named_parameters()):
-        print(l[0], ':', l[1].detach().numpy().shape)
+    # print(model)
+    # print('-'*60)
+    # for l in list(model.named_parameters()):
+    #     print(l[0], ':', l[1].detach().numpy().shape)
 
-    # model = torch.load("saved_models/time_space_conv_725_epoch7.pt")
+    model = torch.load("saved_models/time_conv_epoch4.pt").double()
+    layers = [child for child in model.children()]
+    embedding_model = layers[0]
+    conv_layer = embedding_model[0]
+    weights = conv_layer.weight
+    weights = weights.squeeze()
+
+    plt.figure(1)
+    for i in range(8):
+        plt.subplot(4, 4, i+1)
+        plt.imshow(weights[i,:,:].detach().numpy())
+    plt.show()
+
+    x = np.mean(data, axis=1)[31, :, :750]
+    word_scan = torch.from_numpy(x)
+    word_scan = word_scan.unsqueeze(0).unsqueeze(0)
+    print('word scan dims: ' + str(word_scan.size()))
+    convolved = model.embedding_model(word_scan)
+    print('convolved shape: ' + str(convolved.size()))
+    intermediateVals = convolved[0].cpu().detach().numpy()
+    filter0Vals = intermediateVals[:55125]
+    print(filter0Vals)
+    filter1Vals = intermediateVals[55125:]
+    print('\n\n\n')
+    print(filter1Vals)
+    # NO WHERE IN HERE AM I DOING W_{WORD} * INTERMEDIATE_VALUE
+    ret = []
+    for i in range(55125):
+        ret.append(0 if filter0Vals[i] > filter1Vals[i] else 1)
+    #print(ret)
+    return ret
+    sys.exit(0)
     optim = torch.optim.Adam(model.parameters(), 
                              lr = 1e-3)
 

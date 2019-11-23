@@ -128,7 +128,7 @@ class Time_Space_Conv(nn.Module):
                                         params[i][3])
             return L_out
 
-        params = [[1, 16, (15,3), 2, 1]]
+        params = [[1, 8, (15,3), 2, 1]]
 
         self.embedding_model = nn.Sequential(
             nn.Conv2d(in_channels = params[0][0],
@@ -140,7 +140,7 @@ class Time_Space_Conv(nn.Module):
             )
 
 
-        in_size = 882000
+        in_size = 441000
 
         self.classification_model = nn.Sequential(
             nn.ReLU(),
@@ -189,7 +189,3 @@ class Logistic_Regression(nn.Module):
                              plot_i, 
                              i)
         return batch_logits
-        
-
-
-
