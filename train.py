@@ -1,7 +1,7 @@
 import torch
-from dataloader import * 
+from dataloader import *
 import pdb
-from model import * 
+from model import *
 import time
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -12,8 +12,8 @@ np.random.seed(10)
 def plot_grad_flow_alt(named_parameters):
     '''Plots the gradients flowing through different layers in the net during training.
     Can be used for checking for possible gradient vanishing / exploding problems.
-    
-    Usage: Plug this function in Trainer class after loss.backwards() as 
+
+    Usage: Plug this function in Trainer class after loss.backwards() as
     "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
     ave_grads = []
     max_grads= []
@@ -37,7 +37,7 @@ def plot_grad_flow_alt(named_parameters):
                 Line2D([0], [0], color="b", lw=4),
                 Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
     plt.savefig('plots/grads_alt_%d.png' % time.time())
-    return 
+    return
 
 def plot_grad_flow(named_parameters):
     ave_grads = []
@@ -55,9 +55,9 @@ def plot_grad_flow(named_parameters):
     plt.title("Gradient flow")
     plt.grid(True)
     plt.savefig('plots/grads_%d.png' % time.time())
-    return 
+    return
 
-def print_stats(batch_idx, after, before, 
+def print_stats(batch_idx, after, before,
                 batch_loss, running_loss, batch_accuracy,
                 correct, total):
     print("Stats: batch %d" % batch_idx)
@@ -99,20 +99,20 @@ class Trainer(object):
         before = time.time()
         print(len(test_loader), "batches of size", self.batch_size)
         for batch_idx, (data, label, label_word) in enumerate(test_loader):
-            # data --> MEG scan 
+            # data --> MEG scan
             # label --> index of word
             # label_word --> actual word (just in case is useful)
             if self.gpu:
                 data = data.float().cuda()
                 label = label.cuda()
 
-            else: data = data.float(); 
+            else: data = data.float();
 
             self.optimizer.zero_grad()
 
-            if NORMALIZE: 
-                # normalizing each channel by subtracting channel mean 
-                # and dividing by channel st dev 
+            if NORMALIZE:
+                # normalizing each channel by subtracting channel mean
+                # and dividing by channel st dev
                 means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                 sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                 data = (data - means) / sds
@@ -146,13 +146,13 @@ class Trainer(object):
             if batch_idx % BATCH_PRINT_INTERVAL == 0:
                 after = time.time()
                 print('Test stats')
-                print_stats(batch_idx, after, before, 
-                            0, 0,  
-                            float(batch_correct / self.batch_size), 
-                            correct, 
+                print_stats(batch_idx, after, before,
+                            0, 0,
+                            float(batch_correct / self.batch_size),
+                            correct,
                             total)
                 before = after
-                
+
         print('Done testing.')
         return float(correct) / total, epoch_loss / batch_idx
 
@@ -166,7 +166,7 @@ class Trainer(object):
             before = time.time()
             print(len(train_loader), "batches of size", self.batch_size)
             for batch_idx, (data, label, label_word) in enumerate(train_loader):
-                # data --> MEG scan 
+                # data --> MEG scan
                 # label --> index of word
                 # label_word --> actual word (just in case is useful)
                 orig_data = data
@@ -174,28 +174,28 @@ class Trainer(object):
                     data = data.float().cuda()
                     label = label.cuda()
 
-                else: data = data.float(); 
+                else: data = data.float();
 
                 self.optimizer.zero_grad()
 
-                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
-                #                     global_step = batch_idx, 
-                #                     metadata = [word for word in label_word], 
+                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1),
+                #                     global_step = batch_idx,
+                #                     metadata = [word for word in label_word],
                 #                     tag = 'Unormalized MEG Vecs')
 
-                if NORMALIZE: 
-                    # normalizing each channel by subtracting channel mean 
-                    # and dividing by channel st dev 
+                if NORMALIZE:
+                    # normalizing each channel by subtracting channel mean
+                    # and dividing by channel st dev
                     means = torch.mean(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                     sds = torch.std(data, dim = 1).view(BATCH_SIZE, 1, MILLISECONDS)
                     data = (data - means) / sds
 
-                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1), 
-                #                     global_step = batch_idx, 
-                #                     metadata = [word for word in label_word], 
+                #writer.add_embedding(mat = data.view(BATCH_SIZE, -1),
+                #                     global_step = batch_idx,
+                #                     metadata = [word for word in label_word],
                 #                     tag = 'Normalized MEG Vecs')
 
-                # FOR SPACE CONVOLUTION 
+                # FOR SPACE CONVOLUTION
                 # want to have the time steps as the channels
                 # data = data.permute(0, 2, 1)
                 out = self.model(data)
@@ -203,7 +203,7 @@ class Trainer(object):
                 out = out.view(self.batch_size, -1)
                 loss = self.criterion(out, label)
                 loss.backward()
-                
+
                 #plot_grad_flow(self.model.named_parameters())
                 #plot_grad_flow_alt(self.model.named_parameters())
 
@@ -231,10 +231,10 @@ class Trainer(object):
 
                 if batch_idx % BATCH_PRINT_INTERVAL == 0:
                     after = time.time()
-                    print_stats(batch_idx, after, before, 
-                                loss.item(), epoch_loss / (batch_idx+1),  
-                                float(batch_correct / self.batch_size), 
-                                correct, 
+                    print_stats(batch_idx, after, before,
+                                loss.item(), epoch_loss / (batch_idx+1),
+                                float(batch_correct / self.batch_size),
+                                correct,
                                 total)
 
                     for m in self.model.modules():
@@ -242,33 +242,40 @@ class Trainer(object):
                             print('Layer type: ' + str(type(m)))
                             print('Shape: ' + str(m.weight.shape))
                             print()
-                            writer.add_histogram("Weights", 
-                                                 m.weight.data, 
+                            writer.add_histogram("Weights",
+                                                 m.weight.data,
                                                  batch_idx)
                     before = after
 
 
             val_acc, val_loss = self.test()
             if best_val_acc is None or val_acc > best_val_acc:
-                torch.save(self.model, MODEL_PATH + 
-                                       "time_conv_epoch%d.pt" % epoch)
+                torch.save(self.model, MODEL_PATH +
+                                       "time_space_conv_epoch%d.pt" % epoch)
                 best_val_acc = val_acc
 
-            writer.add_scalar("Loss/Train", 
-                              epoch_loss / batch_idx, 
+            writer.add_scalar("Loss/Train",
+                              epoch_loss / batch_idx,
                               epoch)
-            writer.add_scalar("Accuracy/Train", 
-                              float(correct) / total, 
+            writer.add_scalar("Accuracy/Train",
+                              float(correct) / total,
                               epoch)
 
-            writer.add_scalar("Loss/Test", 
-                              val_loss, 
+            writer.add_scalar("Loss/Test",
+                              val_loss,
                               epoch)
-            writer.add_scalar("Accuracy/Test", 
-                              val_acc, 
+            writer.add_scalar("Accuracy/Test",
+                              val_acc,
                               epoch)
 
         return
+
+
+def get_one_patch_intermed(i, word_scan, weights, filter=0):
+    patch = word_scan[0, 0, (15*i):(15*(i+1)),(3*i):(3*(i+1))].flatten()
+    filter = weights[filter,0,:,:].flatten()
+    intermed = np.dot(patch.numpy(), filter.detach().numpy())
+    return intermed
 
 
 def main():
@@ -282,39 +289,45 @@ def main():
     # for l in list(model.named_parameters()):
     #     print(l[0], ':', l[1].detach().numpy().shape)
 
-    model = torch.load("saved_models/time_conv_epoch4.pt").double()
+    model = torch.load("saved_models/time_space_conv_epoch5.pt").double()
     layers = [child for child in model.children()]
     embedding_model = layers[0]
     conv_layer = embedding_model[0]
     weights = conv_layer.weight
-    weights = weights.squeeze()
+    #
+    # plt.figure(1)
+    # for i in range(8):
+    #     plt.subplot(4, 4, i+1)
+    #     plt.imshow(weights[i,:,:].detach().numpy())
+    # plt.show()
 
-    plt.figure(1)
-    for i in range(8):
-        plt.subplot(4, 4, i+1)
-        plt.imshow(weights[i,:,:].detach().numpy())
-    plt.show()
+    pdb.set_trace()
 
-    x = np.mean(data, axis=1)[31, :, :750]
+    x = np.mean(data, axis=1)[31:33, :, :750]
     word_scan = torch.from_numpy(x)
     word_scan = word_scan.unsqueeze(0).unsqueeze(0)
+    # means = torch.mean(word_scan, dim = 1).view(2, 1, MILLISECONDS)
+    # sds = torch.std(word_scan, dim = 1).view(2, 1, MILLISECONDS)
+    # word_scan = (word_scan - means) / sds
+    # word_scan = word_scan.unsqueeze(0)
     print('word scan dims: ' + str(word_scan.size()))
     convolved = model.embedding_model(word_scan)
     print('convolved shape: ' + str(convolved.size()))
-    intermediateVals = convolved[0].cpu().detach().numpy()
-    filter0Vals = intermediateVals[:55125]
-    print(filter0Vals)
-    filter1Vals = intermediateVals[55125:]
+    intermediate_vals = convolved[0].cpu().detach().numpy()
+    filter_0_vals = intermediate_vals[:55125]
+    print(filter_0_vals)
+    filter_1_vals = intermediate_vals[55125:]
     print('\n\n\n')
-    print(filter1Vals)
+    print(filter_1_vals)
     # NO WHERE IN HERE AM I DOING W_{WORD} * INTERMEDIATE_VALUE
     ret = []
     for i in range(55125):
-        ret.append(0 if filter0Vals[i] > filter1Vals[i] else 1)
+        ret.append(0 if filter_0_vals[i] > filter_1_vals[i] else 1)
+
     #print(ret)
     return ret
     sys.exit(0)
-    optim = torch.optim.Adam(model.parameters(), 
+    optim = torch.optim.Adam(model.parameters(),
                              lr = 1e-3)
 
     trainer = Trainer(model, optim)
@@ -325,9 +338,9 @@ def main():
         print("Begin training...")
         trainer.train(N_EPOCHS, train_loader)
 
-    return 
+    return
 
 
 
 if __name__ == '__main__':
-    main() 
+    main()
