@@ -1,9 +1,12 @@
 import torch
+import matplotlib
+matplotlib.use('TKAgg')
 from dataloader import *
 import pdb
 from model import *
 import time
 import matplotlib.pyplot as plt
+plt.ion()
 from matplotlib.lines import Line2D
 import sys
 
@@ -289,11 +292,11 @@ def main():
     # for l in list(model.named_parameters()):
     #     print(l[0], ':', l[1].detach().numpy().shape)
 
-    model = torch.load("saved_models/time_space_conv_epoch5.pt").double()
-    layers = [child for child in model.children()]
-    embedding_model = layers[0]
-    conv_layer = embedding_model[0]
-    weights = conv_layer.weight
+    model = torch.load("saved_models/time_space_conv_epoch5.pt")
+    # layers = [child for child in model.children()]
+    # embedding_model = layers[0]
+    # conv_layer = embedding_model[0]
+    # weights = conv_layer.weight
     #
     # plt.figure(1)
     # for i in range(8):
@@ -301,28 +304,48 @@ def main():
     #     plt.imshow(weights[i,:,:].detach().numpy())
     # plt.show()
 
-    pdb.set_trace()
+    # pdb.set_trace()
 
-    x = np.mean(data, axis=1)[31:33, :, :750]
-    word_scan = torch.from_numpy(x)
-    word_scan = word_scan.unsqueeze(0).unsqueeze(0)
-    # means = torch.mean(word_scan, dim = 1).view(2, 1, MILLISECONDS)
-    # sds = torch.std(word_scan, dim = 1).view(2, 1, MILLISECONDS)
-    # word_scan = (word_scan - means) / sds
-    # word_scan = word_scan.unsqueeze(0)
+    x = np.mean(data, axis=1)[:, :, :750]
+    word_scan = torch.from_numpy(x).float()
     print('word scan dims: ' + str(word_scan.size()))
+    means = torch.mean(word_scan, dim = 1).view(60, 1, MILLISECONDS)
+    sds = torch.std(word_scan, dim = 1).view(60, 1, MILLISECONDS)
+    word_scan = (word_scan - means) / sds
+    word_scan = word_scan.unsqueeze(1)
+    print('word scan dims: ' + str(word_scan.size()))
+    # pdb.set_trace()
     convolved = model.embedding_model(word_scan)
+    all_intermediates = convolved.cpu().detach().numpy()
+    print('all_intermediates shape: ' + str(all_intermediates.shape))
+    all_weights = model.classification_model[1].weight.data.numpy()
+    intermediates_times_weights = np.multiply(all_intermediates, all_weights)
     print('convolved shape: ' + str(convolved.size()))
-    intermediate_vals = convolved[0].cpu().detach().numpy()
-    filter_0_vals = intermediate_vals[:55125]
-    print(filter_0_vals)
-    filter_1_vals = intermediate_vals[55125:]
-    print('\n\n\n')
-    print(filter_1_vals)
-    # NO WHERE IN HERE AM I DOING W_{WORD} * INTERMEDIATE_VALUE
-    ret = []
-    for i in range(55125):
-        ret.append(0 if filter_0_vals[i] > filter_1_vals[i] else 1)
+    for word_idx in range(60):
+        intermediate_vals = convolved[word_idx].cpu().detach().numpy()
+        filter_0_vals = intermediate_vals[:55125]
+        filter_1_vals = intermediate_vals[55125:]
+
+        ret = []
+        f0_vals = intermediates_times_weights[word_idx][:55125]
+        f1_vals = intermediates_times_weights[word_idx][55125:]
+        for i in range(55125):
+            ret.append(0 if f0_vals[i] > f1_vals[i] else 1)
+
+        fig = plt.figure(1)
+        ret = np.reshape(ret, (147, 375))
+        plt.imshow(ret)
+        fig.savefig('filter_per_pt_plots/'  + str(word_idx) + '.png')
+
+        # fig0 = plt.figure(1)
+        # filter_0_vals = np.reshape(filter_0_vals, (147, 375))
+        # plt.imshow(filter_0_vals)
+        # fig0.savefig('intermediate_plots/' + str(word_idx) + '_fig0.png')
+        #
+        # fig1 = plt.figure(1)
+        # filter_1_vals = np.reshape(filter_1_vals, (147, 375))
+        # plt.imshow(filter_1_vals)
+        # fig1.savefig('intermediate_plots/' + str(word_idx) + '_fig1.png')
 
     #print(ret)
     return ret
