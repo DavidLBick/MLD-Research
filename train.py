@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 plt.ion()
 from matplotlib.lines import Line2D
 import sys
+import functools
 
 np.random.seed(10)
 
@@ -281,6 +282,14 @@ def get_one_patch_intermed(i, word_scan, weights, filter=0):
     return intermed
 
 
+def max_points(activations, new_vals, word_idx):
+    if len(activations) == 0:
+        activations = [None]*55125
+    for i in range(len(new_vals)):
+        if activations[i] == None or activations[i][0] < new_vals[i]:
+            activations[i] = (new_vals[i], word_idx)
+    return activations
+
 def main():
     print("Creating model and optimizer...")
     NUM_WORDS = 60
@@ -292,7 +301,7 @@ def main():
     # for l in list(model.named_parameters()):
     #     print(l[0], ':', l[1].detach().numpy().shape)
 
-    model = torch.load("saved_models/time_space_conv_epoch5.pt")
+    model = torch.load("saved_models/time_space_conv_725_epoch7.pt")
     # layers = [child for child in model.children()]
     # embedding_model = layers[0]
     # conv_layer = embedding_model[0]
@@ -321,17 +330,38 @@ def main():
     all_weights = model.classification_model[1].weight.data.numpy()
     intermediates_times_weights = np.multiply(all_intermediates, all_weights)
     print('convolved shape: ' + str(convolved.size()))
+
+    NUM_FILTERS = 16
+    filters = [[] for i in range(NUM_FILTERS)]
+    activations = [[] for i in range(NUM_FILTERS)]
     for word_idx in range(60):
         intermediate_vals = convolved[word_idx].cpu().detach().numpy()
-        filter_0_vals = intermediate_vals[:55125]
-        filter_1_vals = intermediate_vals[55125:]
+        for i in range(len(filters)):
+            filters[i] = intermediate_vals[55125*i : 55125*(i+1)]
 
         ret = []
-        f0_vals = intermediates_times_weights[word_idx][:55125]
-        f1_vals = intermediates_times_weights[word_idx][55125:]
-        for i in range(55125):
-            ret.append(0 if f0_vals[i] > f1_vals[i] else 1)
 
+        filter_vals = [intermediates_times_weights[word_idx][55125*i : 55125*(i+1)] for i in range(len(filters))]
+        # f0_vals = intermediates_times_weights[word_idx][:55125]
+        # f1_vals = intermediates_times_weights[word_idx][55125:]
+
+        # activations = [max_points(activations[i], filter_vals[i], word_idx) for i in range(len(filters))]
+        # filter_0_activations = max_points(filter_0_activations, f0_vals, word_idx)
+        # filter_1_activations = max_points(filter_1_activations, f1_vals, word_idx)
+
+        # filter_0_activations.append((word_idx, np.sum(f0_vals)))
+        # filter_1_activations.append((word_idx, np.sum(f1_vals)))
+
+        for i in range(55125):
+            curr_max = None
+            max_filter = None
+            for j in range(len(filters)):
+                if curr_max == None or filter_vals[j][i] > curr_max:
+                    curr_max = filter_vals[j][i]
+                    max_filter = j
+            ret.append(max_filter)
+
+            # ret.append(0 if f0_vals[i] > f1_vals[i] else 1)
         fig = plt.figure(1)
         ret = np.reshape(ret, (147, 375))
         plt.imshow(ret)
@@ -347,7 +377,14 @@ def main():
         # plt.imshow(filter_1_vals)
         # fig1.savefig('intermediate_plots/' + str(word_idx) + '_fig1.png')
 
-    #print(ret)
+    # for i in range(len(filters)):
+    #     activations[i] = list(map(lambda x: x[1], activations[i]))
+    #     fig = plt.figure(1)
+    #     filter_vals = np.reshape(activations[i], (147, 375))
+    #     plt.imshow(filter_vals)
+    #     fig.savefig('word_per_filter_pt_plots/filter' + str(i) + '.png')
+
+    pdb.set_trace()
     return ret
     sys.exit(0)
     optim = torch.optim.Adam(model.parameters(),
